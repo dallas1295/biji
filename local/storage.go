@@ -1,4 +1,4 @@
-package locaj
+package local
 
 import (
 	"encoding/json"
