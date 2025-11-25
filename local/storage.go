@@ -85,10 +85,8 @@ func (s *Store) LoadNotes() ([]Note, error) {
 	return notes, nil
 }
 
-// TODO: Need to update function to use the in-memory allocated notes AND update both memory and hard disk file.
 func (s *Store) AddNote(name, content string) (*Note, error) {
 	noteID := uuid.NewString()
-
 	note := Note{
 		ID:         noteID,
 		Name:       name,
@@ -113,7 +111,6 @@ func (s *Store) AddNote(name, content string) (*Note, error) {
 	return &note, nil
 }
 
-// TODO: Need to update function to use the in-memory allocated notes AND update both memory and hard disk file.
 func (s *Store) DeleteNote(id string) error {
 	indexToDelete := -1
 	for i, note := range s.notes {
