@@ -155,12 +155,10 @@ func TestUpdateNoteName_NonExistentID(t *testing.T) {
 		t.Fatalf("Failed to create test store: %v", err)
 	}
 	defer store.cleanup()
-	// Try to update a note that doesn't exist
 	nonExistentID := "non-existent-id"
 	newName := "updated name"
 
 	updatedNote, err := store.UpdateNoteName(nonExistentID, newName)
-	// Should return nil for both note and error when ID not found
 	if err != nil {
 		t.Errorf("Expected no error when updating non-existent note, got: %v", err)
 	}
@@ -169,7 +167,6 @@ func TestUpdateNoteName_NonExistentID(t *testing.T) {
 		t.Errorf("Expected nil note when updating non-existent ID, got: %v", updatedNote)
 	}
 
-	// Verify store remains empty
 	if len(store.notes) != 0 {
 		t.Errorf("Expected store to remain empty, but has %d notes", len(store.notes))
 	}
@@ -182,12 +179,10 @@ func TestUpdateNoteContent_NonExistentID(t *testing.T) {
 		t.Fatalf("Failed to create test store: %v", err)
 	}
 	defer store.cleanup()
-	// Try to update content of a note that doesn't exist
 	nonExistentID := "non-existent-id"
 	newContent := "updated content"
 
 	updatedNote, err := store.UpdateNoteContent(nonExistentID, newContent)
-	// Should return nil for both note and error when ID not found
 	if err != nil {
 		t.Errorf("Expected no error when updating non-existent note content, got: %v", err)
 	}
@@ -196,7 +191,6 @@ func TestUpdateNoteContent_NonExistentID(t *testing.T) {
 		t.Errorf("Expected nil note when updating non-existent ID, got: %v", updatedNote)
 	}
 
-	// Verify store remains empty
 	if len(store.notes) != 0 {
 		t.Errorf("Expected store to remain empty, but has %d notes", len(store.notes))
 	}
