@@ -66,6 +66,9 @@ func (s *Store) Init() error {
 }
 
 func (s *Store) LoadNotes() ([]Note, error) {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
 	var notes []Note
 
 	notesJSON, err := os.ReadFile(s.dataFile)
@@ -86,6 +89,9 @@ func (s *Store) LoadNotes() ([]Note, error) {
 }
 
 func (s *Store) AddNote(name, content string) (*Note, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	noteID := uuid.NewString()
 	note := Note{
 		ID:         noteID,
@@ -112,6 +118,9 @@ func (s *Store) AddNote(name, content string) (*Note, error) {
 }
 
 func (s *Store) DeleteNote(id string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	indexToDelete := -1
 	for i, note := range s.notes {
 		if note.ID == id {
@@ -140,6 +149,9 @@ func (s *Store) DeleteNote(id string) error {
 }
 
 func (s *Store) UpdateNoteName(id string, newName string) (*Note, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	var updatedNote *Note
 
 	for i, note := range s.notes {
@@ -168,6 +180,9 @@ func (s *Store) UpdateNoteName(id string, newName string) (*Note, error) {
 }
 
 func (s *Store) UpdateNoteContent(id string, newContent string) (*Note, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	var updatedNote *Note
 	trimmedContent := strings.TrimSpace(newContent)
 
@@ -195,4 +210,14 @@ func (s *Store) UpdateNoteContent(id string, newContent string) (*Note, error) {
 	}
 
 	return updatedNote, nil
+}
+
+func (s *Store) FindByID(notes []Note, id string) (*Note, error) {
+	for i := range notes {
+		if notes[i].ID == id {
+			return &notes[i], nil
+		}
+	}
+
+	return nil, fmt.Errorf("could not find note with ID: %s", id)
 }

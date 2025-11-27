@@ -3,6 +3,7 @@ package local
 import (
 	"fmt"
 	"os"
+	"sync"
 	"testing"
 )
 
@@ -193,5 +194,139 @@ func TestUpdateNoteContent_NonExistentID(t *testing.T) {
 
 	if len(store.notes) != 0 {
 		t.Errorf("Expected store to remain empty, but has %d notes", len(store.notes))
+	}
+}
+
+func TestConcurrentAddNotes(t *testing.T) {
+	store := &Store{}
+	err := store.Init()
+	if err != nil {
+		t.Fatalf("Failed to create test store: %v", err)
+	}
+
+	var wg sync.WaitGroup
+
+	for i := 0; i <= 4; i++ {
+		wg.Add(1)
+		go func(index int) {
+			defer wg.Done()
+			currNote := i + 1
+			currContent := fmt.Sprintf("Note # %v", currNote)
+			store.AddNote("Hello", currContent)
+		}(i)
+	}
+
+	wg.Wait()
+	for i, note := range store.notes {
+		fmt.Printf("Here's %v note with content: %s\n", i, note.Content)
+	}
+
+	fmt.Printf("Curr array length: %v", len(store.notes))
+
+	if len(store.notes) <= 4 {
+		t.Error("Expected four notes in in-memory cache")
+	}
+}
+
+func TestConcurrentDeleteNotes(t *testing.T) {
+	store := &Store{}
+	err := store.Init()
+	if err != nil {
+		t.Fatalf("Failed to create test store: %v", err)
+	}
+	defer store.cleanup()
+
+	var IDArr []string
+	var wg sync.WaitGroup
+
+	for i := range store.notes {
+		IDArr = append(IDArr, store.notes[i].ID)
+	}
+
+	for i, id := range IDArr {
+		wg.Add(1)
+		go func(num int, noteID string) {
+			defer wg.Done()
+			store.DeleteNote(noteID)
+			fmt.Printf("Deleted note %v from array\n", i)
+		}(i, id)
+	}
+
+	wg.Wait()
+
+	if len(store.notes) != 0 {
+		t.Error("Expected empty note array")
+	}
+}
+
+func TestConcurrentUpdates(t *testing.T) {
+	store := &Store{}
+	err := store.Init()
+	if err != nil {
+		t.Fatalf("Failed to create test store: %v", err)
+	}
+	defer store.cleanup()
+
+	var wg sync.WaitGroup
+
+	for i := 0; i <= 4; i++ {
+		wg.Add(1)
+		go func(index int) {
+			defer wg.Done()
+			currNote := i + 1
+			currContent := fmt.Sprintf("Note # %v", currNote)
+			store.AddNote("Hello", currContent)
+		}(i)
+	}
+
+	wg.Wait()
+
+	var IDArr []string
+	for i := range store.notes {
+		IDArr = append(IDArr, store.notes[i].ID)
+	}
+
+	expectedUpdates := make(map[string]struct {
+		name    string
+		content string
+	})
+
+	for i, id := range IDArr {
+		expectedName := fmt.Sprintf("Note %v", i)
+		expectedContent := fmt.Sprintf("New content %v", i)
+		expectedUpdates[id] = struct {
+			name    string
+			content string
+		}{name: expectedName, content: expectedContent}
+	}
+
+	for i, id := range IDArr {
+		wg.Add(1)
+		go func(num int, noteID string) {
+			defer wg.Done()
+			newName := fmt.Sprintf("Note %v", i)
+			store.UpdateNoteName(noteID, newName)
+			fmt.Printf("Update note %v's name to: %v\n", i, store.notes[i].Name)
+			newContent := fmt.Sprintf("New content %v", i)
+			store.UpdateNoteContent(noteID, newContent)
+			fmt.Printf("Updated note %v's content to : %v", i, store.notes[i].Content)
+		}(i, id)
+	}
+
+	wg.Wait()
+
+	for id, expected := range expectedUpdates {
+		note, err := store.FindByID(store.notes, id)
+		if err != nil {
+			t.Errorf("Failed to find note %s: %v", id, err)
+			continue
+		}
+
+		if note.Name != expected.name {
+			t.Error("Expected note name to be updated")
+		}
+		if note.Content != expected.content {
+			t.Error("Expected note content to be updated")
+		}
 	}
 }
