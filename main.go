@@ -7,6 +7,8 @@ import (
 	"github.com/dallas1295/biji/local"
 )
 
+// TODO: Need to move app into a seperate fiile if possible
+
 func main() {
 	store := &local.Store{}
 	store.Init()
