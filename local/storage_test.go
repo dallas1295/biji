@@ -118,7 +118,7 @@ func TestUpdateNote(t *testing.T) {
 		t.Fatalf("Failed to update note name: %v", err)
 	}
 
-	store.LoadNotes()
+	store.GetNotes()
 
 	if store.notes[0].Name != updatedName {
 		t.Error("Expected update to note's name")

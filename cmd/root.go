@@ -10,11 +10,11 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "biji",
-	Short: "biji is a note taking application designed for both TUI and GUI environments.",
-	Long: `biji is a not taking application designed for both TUI and GUI environments.
-		It's being used to learn Go lang for both scripting and normal  app development;
-		It will eventually grow into having Cloud Sync and storage and an Android application.`,
+	Use: "biji",
+	// Short: "biji is a note taking application designed for both TUI and GUI environments.",
+	// Long: `biji is a not taking application designed for both TUI and GUI environments.
+	// 	It's being used to learn Go lang for both scripting and normal  app development;
+	// 	It will eventually grow into having Cloud Sync and storage and an Android application.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -36,4 +36,5 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.AddCommand(newNote)
 }

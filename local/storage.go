@@ -3,6 +3,7 @@ package local
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -56,7 +57,7 @@ func (s *Store) Init() error {
 		}
 	}
 
-	notes, err := s.LoadNotes()
+	notes, err := s.GetNotes()
 	if err != nil {
 		return fmt.Errorf("error loading notes: %w", err)
 	}
@@ -65,7 +66,7 @@ func (s *Store) Init() error {
 	return nil
 }
 
-func (s *Store) LoadNotes() ([]Note, error) {
+func (s *Store) GetNotes() ([]Note, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -220,4 +221,21 @@ func (s *Store) FindByID(notes []Note, id string) (*Note, error) {
 	}
 
 	return nil, fmt.Errorf("could not find note with ID: %s", id)
+}
+
+func (s *Store) GetNoteNames() []string {
+	notesArr, err := s.GetNotes()
+	if err != nil {
+		log.Fatalf("error loading notes: %v", err)
+	}
+
+	var noteNames []string
+
+	for _, note := range notesArr {
+		name := note.Name
+		noteNames = append(noteNames, name)
+
+	}
+
+	return noteNames
 }
