@@ -5,6 +5,7 @@ package cmd
 import (
 	"os"
 
+	"codeberg.org/dallas1295/biji/local"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +20,12 @@ var rootCmd = &cobra.Command{
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
+// It takes local.Store as a param for use by commands
+func Execute(s *local.Store) {
+	rootCmd.AddCommand(newNote(s))
+	rootCmd.AddCommand(deleteNote(s))
+	rootCmd.AddCommand(updateNoteName(s))
+
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -36,5 +42,4 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	rootCmd.AddCommand(newNote)
 }
