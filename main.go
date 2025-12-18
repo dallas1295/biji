@@ -14,7 +14,7 @@ func main() {
 		log.Fatalf("failed to initialize store: %v:", err)
 	}
 
-	cmd.Execute()
+	cmd.Execute(s)
 
 	if err := tui.Run(s); err != nil {
 		log.Fatalf("TUI exited with err: %v", err)
