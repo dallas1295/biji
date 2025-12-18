@@ -27,7 +27,7 @@ type Note struct {
 
 type Store struct {
 	dataFile string
-	notes    []Note       // In-memory cache
+	Notes    []Note       // In-memory cache
 	mutex    sync.RWMutex // For multithreading
 }
 
@@ -61,9 +61,22 @@ func (s *Store) Init() error {
 	if err != nil {
 		return fmt.Errorf("error loading notes: %w", err)
 	}
-	s.notes = notes
+	s.Notes = notes
 
 	return nil
+}
+
+func (s *Store) GetNoteFromID(id string) (Note, error) {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	for _, note := range s.Notes {
+		if note.ID == id {
+			return note, nil
+		}
+	}
+
+	return Note{}, fmt.Errorf("could not find note with ID: %v", id)
 }
 
 func (s *Store) GetNotes() ([]Note, error) {
@@ -93,6 +106,14 @@ func (s *Store) AddNote(name, content string) (*Note, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	trimmedName := strings.TrimSpace(name)
+	id, _ := s.FindNoteID(s.Notes, trimmedName)
+	if id == "" {
+		name = trimmedName
+	} else {
+		log.Fatalf("name: %v, is already taken", trimmedName)
+	}
+
 	noteID := uuid.NewString()
 	note := Note{
 		ID:         noteID,
@@ -103,9 +124,9 @@ func (s *Store) AddNote(name, content string) (*Note, error) {
 		Done:       false,
 	}
 
-	s.notes = append(s.notes, note)
+	s.Notes = append(s.Notes, note)
 
-	jsonData, err := json.Marshal(s.notes)
+	jsonData, err := json.Marshal(s.Notes)
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling json file: %w", err)
 	}
@@ -123,7 +144,7 @@ func (s *Store) DeleteNote(id string) error {
 	defer s.mutex.Unlock()
 
 	indexToDelete := -1
-	for i, note := range s.notes {
+	for i, note := range s.Notes {
 		if note.ID == id {
 			indexToDelete = i
 			break
@@ -131,12 +152,12 @@ func (s *Store) DeleteNote(id string) error {
 	}
 
 	if indexToDelete != -1 {
-		s.notes = append(s.notes[:indexToDelete], s.notes[indexToDelete+1:]...)
+		s.Notes = append(s.Notes[:indexToDelete], s.Notes[indexToDelete+1:]...)
 	} else {
 		return nil
 	}
 
-	jsonData, err := json.Marshal(s.notes)
+	jsonData, err := json.Marshal(s.Notes)
 	if err != nil {
 		return fmt.Errorf("error saving json file: %w", err)
 	}
@@ -149,78 +170,78 @@ func (s *Store) DeleteNote(id string) error {
 	return nil
 }
 
-func (s *Store) UpdateNoteName(id string, newName string) (*Note, error) {
+func (s *Store) UpdateNoteName(id string, newName string) (Note, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	var updatedNote *Note
-
-	for i, note := range s.notes {
+	newName = strings.TrimSpace(newName)
+	for i, note := range s.Notes {
 		if note.ID == id {
-			if s.notes[i].Name != newName {
-				s.notes[i].Name = newName
-				s.notes[i].ModifiedAt = time.Now()
-				updatedNote = &s.notes[i]
-
-				jsonData, err := json.Marshal(s.notes)
-				if err != nil {
-					return nil, fmt.Errorf("error saving json file: %w", err)
-				}
-
-				err = os.WriteFile(s.dataFile, jsonData, 0o644)
-				if err != nil {
-					return nil, fmt.Errorf("error saving json file: %w", err)
-				}
-			} else {
-				return nil, nil
+			if s.Notes[i].Name == newName {
+				return s.Notes[i], nil
 			}
+
+			s.Notes[i].Name = newName
+			s.Notes[i].ModifiedAt = time.Now()
+
+			jsonData, err := json.Marshal(s.Notes)
+			if err != nil {
+				return Note{}, fmt.Errorf("error marshalling new JSON file: %v", err)
+			}
+			if err := os.WriteFile(s.dataFile, jsonData, 0o644); err != nil {
+				return Note{}, fmt.Errorf("error saving JSON file: %v", err)
+			}
+
+			return s.Notes[i], nil
 		}
 	}
-
-	return updatedNote, nil
+	return Note{}, fmt.Errorf("could not find note with provided ID")
 }
 
-func (s *Store) UpdateNoteContent(id string, newContent string) (*Note, error) {
+func (s *Store) UpdateNoteContent(id string, newContent string) (Note, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	var updatedNote *Note
 	trimmedContent := strings.TrimSpace(newContent)
 
-	for i, note := range s.notes {
+	for i, note := range s.Notes {
 		if note.ID == id {
-			if s.notes[i].Content != trimmedContent {
-				s.notes[i].Content = trimmedContent
-
-				s.notes[i].ModifiedAt = time.Now()
-				updatedNote = &s.notes[i]
-
-				jsonData, err := json.Marshal(s.notes)
-				if err != nil {
-					return nil, fmt.Errorf("error saving json file: %w", err)
-				}
-
-				err = os.WriteFile(s.dataFile, jsonData, 0o644)
-				if err != nil {
-					return nil, fmt.Errorf("error saving json file: %w", err)
-				}
-			} else {
-				return nil, nil
+			// Only update if the content is actually different
+			if s.Notes[i].Content == trimmedContent {
+				// Return a copy of the unchanged note
+				return s.Notes[i], nil
 			}
+
+			// Modify the note in-place within the locked section
+			s.Notes[i].Content = trimmedContent
+			s.Notes[i].ModifiedAt = time.Now()
+
+			// Persist the change
+			jsonData, err := json.Marshal(s.Notes)
+			if err != nil {
+				return Note{}, fmt.Errorf("error saving json file: %w", err)
+			}
+			if err := os.WriteFile(s.dataFile, jsonData, 0o644); err != nil {
+				return Note{}, fmt.Errorf("error saving json file: %w", err)
+			}
+
+			// Return a COPY of the newly updated note
+			return s.Notes[i], nil
 		}
 	}
 
-	return updatedNote, nil
+	return Note{}, fmt.Errorf("could not find note with ID: %s", id)
 }
 
-func (s *Store) FindByID(notes []Note, id string) (*Note, error) {
+func (s *Store) FindNoteID(notes []Note, name string) (string, error) {
+	trimmedName := strings.TrimSpace(name)
 	for i := range notes {
-		if notes[i].ID == id {
-			return &notes[i], nil
+		if notes[i].Name == trimmedName {
+			return notes[i].ID, nil
 		}
 	}
 
-	return nil, fmt.Errorf("could not find note with ID: %s", id)
+	return "", fmt.Errorf("could not find note with name: %s", trimmedName)
 }
 
 func (s *Store) GetNoteNames() []string {

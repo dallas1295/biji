@@ -74,14 +74,14 @@ func TestDeleteNote(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to add note: %v", err)
 	}
-	fmt.Printf("the notes array: %v", store.notes)
+	fmt.Printf("the notes array: %v", store.Notes)
 
-	deleteID := store.notes[0].ID
+	deleteID := store.Notes[0].ID
 
 	store.DeleteNote(deleteID)
-	fmt.Printf("the new notes array: %v", store.notes)
+	fmt.Printf("the new notes array: %v", store.Notes)
 
-	if len(store.notes) > 0 {
+	if len(store.Notes) > 0 {
 		t.Error("Expected note deletion and empty array")
 	}
 
@@ -120,11 +120,11 @@ func TestUpdateNote(t *testing.T) {
 
 	store.GetNotes()
 
-	if store.notes[0].Name != updatedName {
+	if store.Notes[0].Name != updatedName {
 		t.Error("Expected update to note's name")
 	}
 
-	if store.notes[0].Content != updatedContent {
+	if store.Notes[0].Content != updatedContent {
 		t.Error("Expected update to note's content")
 	}
 
@@ -144,8 +144,8 @@ func TestDeleteNote_NonExistentID(t *testing.T) {
 		t.Errorf("Expected no error when deleting non-existent note, got: %v", err)
 	}
 
-	if len(store.notes) != 0 {
-		t.Errorf("Expected store to remain empty, but has %d notes", len(store.notes))
+	if len(store.Notes) != 0 {
+		t.Errorf("Expected store to remain empty, but has %d notes", len(store.Notes))
 	}
 }
 
@@ -168,8 +168,8 @@ func TestUpdateNoteName_NonExistentID(t *testing.T) {
 		t.Errorf("Expected nil note when updating non-existent ID, got: %v", updatedNote)
 	}
 
-	if len(store.notes) != 0 {
-		t.Errorf("Expected store to remain empty, but has %d notes", len(store.notes))
+	if len(store.Notes) != 0 {
+		t.Errorf("Expected store to remain empty, but has %d notes", len(store.Notes))
 	}
 }
 
@@ -192,8 +192,8 @@ func TestUpdateNoteContent_NonExistentID(t *testing.T) {
 		t.Errorf("Expected nil note when updating non-existent ID, got: %v", updatedNote)
 	}
 
-	if len(store.notes) != 0 {
-		t.Errorf("Expected store to remain empty, but has %d notes", len(store.notes))
+	if len(store.Notes) != 0 {
+		t.Errorf("Expected store to remain empty, but has %d notes", len(store.Notes))
 	}
 }
 
@@ -217,13 +217,13 @@ func TestConcurrentAddNotes(t *testing.T) {
 	}
 
 	wg.Wait()
-	for i, note := range store.notes {
+	for i, note := range store.Notes {
 		fmt.Printf("Here's %v note with content: %s\n", i, note.Content)
 	}
 
-	fmt.Printf("Curr array length: %v", len(store.notes))
+	fmt.Printf("Curr array length: %v", len(store.Notes))
 
-	if len(store.notes) <= 4 {
+	if len(store.Notes) <= 4 {
 		t.Error("Expected four notes in in-memory cache")
 	}
 }
@@ -239,8 +239,8 @@ func TestConcurrentDeleteNotes(t *testing.T) {
 	var IDArr []string
 	var wg sync.WaitGroup
 
-	for i := range store.notes {
-		IDArr = append(IDArr, store.notes[i].ID)
+	for i := range store.Notes {
+		IDArr = append(IDArr, store.Notes[i].ID)
 	}
 
 	for i, id := range IDArr {
@@ -254,7 +254,7 @@ func TestConcurrentDeleteNotes(t *testing.T) {
 
 	wg.Wait()
 
-	if len(store.notes) != 0 {
+	if len(store.Notes) != 0 {
 		t.Error("Expected empty note array")
 	}
 }
@@ -282,8 +282,8 @@ func TestConcurrentUpdates(t *testing.T) {
 	wg.Wait()
 
 	var IDArr []string
-	for i := range store.notes {
-		IDArr = append(IDArr, store.notes[i].ID)
+	for i := range store.Notes {
+		IDArr = append(IDArr, store.Notes[i].ID)
 	}
 
 	expectedUpdates := make(map[string]struct {
@@ -306,17 +306,17 @@ func TestConcurrentUpdates(t *testing.T) {
 			defer wg.Done()
 			newName := fmt.Sprintf("Note %v", i)
 			store.UpdateNoteName(noteID, newName)
-			fmt.Printf("Update note %v's name to: %v\n", i, store.notes[i].Name)
+			fmt.Printf("Update note %v's name to: %v\n", i, store.Notes[i].Name)
 			newContent := fmt.Sprintf("New content %v", i)
 			store.UpdateNoteContent(noteID, newContent)
-			fmt.Printf("Updated note %v's content to : %v", i, store.notes[i].Content)
+			fmt.Printf("Updated note %v's content to : %v", i, store.Notes[i].Content)
 		}(i, id)
 	}
 
 	wg.Wait()
 
 	for id, expected := range expectedUpdates {
-		note, err := store.FindByID(store.notes, id)
+		note, err := store.GetNoteFromID(id)
 		if err != nil {
 			t.Errorf("Failed to find note %s: %v", id, err)
 			continue
