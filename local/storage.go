@@ -3,7 +3,6 @@ package local
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -111,7 +110,7 @@ func (s *Store) AddNote(name, content string) (*Note, error) {
 	if id == "" {
 		name = trimmedName
 	} else {
-		log.Fatalf("name: %v, is already taken", trimmedName)
+		fmt.Errorf("name: %v, is already taken", trimmedName)
 	}
 
 	noteID := uuid.NewString()
@@ -247,7 +246,7 @@ func (s *Store) FindNoteID(notes []Note, name string) (string, error) {
 func (s *Store) GetNoteNames() []string {
 	notesArr, err := s.GetNotes()
 	if err != nil {
-		log.Fatalf("error loading notes: %v", err)
+		fmt.Errorf("error loading notes: %v", err)
 	}
 
 	var noteNames []string
@@ -259,4 +258,73 @@ func (s *Store) GetNoteNames() []string {
 	}
 
 	return noteNames
+}
+
+func (s *Store) ExportNote(id string) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("could not find user's home directory: %v", err)
+	}
+
+	docs := filepath.Join(home, "Documents")
+
+	noteJSON, err := s.GetNoteFromID(id)
+	if err != nil {
+		return fmt.Errorf("could not get note with id: %s", id)
+	}
+
+	prepName := strings.ReplaceAll(noteJSON.Name, " ", "_")
+	fileName := prepName + ".md"
+	filePath := filepath.Join(docs, fileName)
+
+	data := []byte(noteJSON.Content)
+
+	err = os.WriteFile(filePath, data, 0o666)
+	if err != nil {
+		return fmt.Errorf("could not export note: %v", err)
+	}
+
+	return nil
+}
+
+func (s *Store) ExportAll() error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("could not find user's home directory: %v", err)
+	}
+
+	exportPath := filepath.Join(home, "Documents", "biji-export.zip")
+
+	tempDir, err := os.MkdirTemp("", "biji-export")
+	if err != nil {
+		return fmt.Errorf("error creating temp directory: %v", err)
+	}
+
+	defer os.RemoveAll(tempDir)
+
+	notes, err := s.GetNotes()
+	if err != nil {
+		return fmt.Errorf("could not retrive notes: %v", err)
+	}
+
+	for _, note := range notes {
+		cleanName := strings.ReplaceAll(note.Name, " ", "_") + ".md"
+		tmpFile := filepath.Join(tempDir, cleanName)
+
+		data := []byte(note.Content)
+
+		if err = os.WriteFile(tmpFile, data, 0o644); err != nil {
+			return fmt.Errorf("failed to write temp file %s: %v", cleanName, err)
+		}
+
+	}
+
+	err = createZip(tempDir, exportPath)
+	if err != nil {
+		return fmt.Errorf("failed to create zip file: %v", err)
+	}
+
+	fmt.Printf("Export Complete!\nCheck your ~/Documents directory.")
+
+	return nil
 }
