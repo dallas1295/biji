@@ -5,7 +5,6 @@ import (
 
 	"codeberg.org/dallas1295/biji/cmd"
 	"codeberg.org/dallas1295/biji/local"
-	"codeberg.org/dallas1295/biji/tui"
 )
 
 func main() {
@@ -15,8 +14,4 @@ func main() {
 	}
 
 	cmd.Execute(s)
-
-	if err := tui.Run(s); err != nil {
-		log.Fatalf("TUI exited with err: %v", err)
-	}
 }
