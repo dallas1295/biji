@@ -74,7 +74,7 @@ func (s *Store) GetNoteFromID(id string) (Note, error) {
 		}
 	}
 
-	return Note{}, fmt.Errorf("could not find note with ID: %w", id)
+	return Note{}, fmt.Errorf("could not find note with ID: %s", id)
 }
 
 func (s *Store) GetNotes() ([]Note, error) {
@@ -109,7 +109,7 @@ func (s *Store) AddNote(name, content string) (*Note, error) {
 	if id == "" {
 		name = trimmedName
 	} else {
-		return &Note{}, fmt.Errorf("name: %w, is already taken", trimmedName)
+		return &Note{}, fmt.Errorf("name: %s, is already taken", trimmedName)
 	}
 
 	noteID := uuid.NewString()
