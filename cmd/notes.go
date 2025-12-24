@@ -28,7 +28,7 @@ func newNote(s *local.Store) *cobra.Command {
 
 				rawInput, err := reader.ReadString('\n')
 				if err != nil {
-					log.Fatalf("Failed to read name input: %v", err)
+					log.Fatalf("Failed to read name: %v", err)
 				}
 				name = strings.TrimSpace(rawInput)
 			}
@@ -36,7 +36,7 @@ func newNote(s *local.Store) *cobra.Command {
 			fmt.Print("Content: ")
 			rawInput, err := reader.ReadString('\n')
 			if err != nil {
-				log.Fatalf("Failed to read name input: %v", err)
+				log.Fatalf("Failed to read content: %v", err)
 			}
 			content = strings.ReplaceAll(rawInput, "\\n ", "\n")
 			content = strings.TrimSpace(content)
@@ -95,7 +95,7 @@ func updateNoteName(s *local.Store) *cobra.Command {
 			currName := strings.TrimSpace(args[0])
 			var newName string
 
-			if len(args) > 2 {
+			if len(args) > 1 {
 				newName = strings.TrimSpace(args[1])
 			} else {
 				fmt.Print("New Name: ")
@@ -214,7 +214,7 @@ func migrate(s *local.Store) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := s.ExportAll()
 			if err != nil {
-				return fmt.Errorf("error exporting notes: %v", err)
+				log.Fatalf("error exporting notes: %v", err)
 			}
 			return nil
 		},
