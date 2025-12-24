@@ -10,7 +10,7 @@ import (
 func main() {
 	s := &local.Store{}
 	if err := s.Init(); err != nil {
-		log.Fatalf("failed to initialize store: %w:", err)
+		log.Fatalf("failed to initialize store: %v:", err)
 	}
 
 	cmd.Execute(s)
