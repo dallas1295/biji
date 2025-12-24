@@ -19,7 +19,6 @@ type Note struct {
 	ID         string    `json:"id"`
 	Name       string    `json:"name"`
 	Content    string    `json:"content"`
-	Done       bool      `json:"done"`
 	CreatedAt  time.Time `json:"createdAt"`
 	ModifiedAt time.Time `json:"modifiedAt"`
 }
@@ -75,7 +74,7 @@ func (s *Store) GetNoteFromID(id string) (Note, error) {
 		}
 	}
 
-	return Note{}, fmt.Errorf("could not find note with ID: %v", id)
+	return Note{}, fmt.Errorf("could not find note with ID: %w", id)
 }
 
 func (s *Store) GetNotes() ([]Note, error) {
@@ -110,7 +109,7 @@ func (s *Store) AddNote(name, content string) (*Note, error) {
 	if id == "" {
 		name = trimmedName
 	} else {
-		fmt.Errorf("name: %v, is already taken", trimmedName)
+		return &Note{}, fmt.Errorf("name: %w, is already taken", trimmedName)
 	}
 
 	noteID := uuid.NewString()
@@ -120,7 +119,6 @@ func (s *Store) AddNote(name, content string) (*Note, error) {
 		Content:    content,
 		CreatedAt:  time.Now(),
 		ModifiedAt: time.Now(),
-		Done:       false,
 	}
 
 	s.Notes = append(s.Notes, note)
@@ -185,10 +183,10 @@ func (s *Store) UpdateNoteName(id string, newName string) (Note, error) {
 
 			jsonData, err := json.Marshal(s.Notes)
 			if err != nil {
-				return Note{}, fmt.Errorf("error marshalling new JSON file: %v", err)
+				return Note{}, fmt.Errorf("error marshalling new JSON file: %w", err)
 			}
 			if err := os.WriteFile(s.dataFile, jsonData, 0o644); err != nil {
-				return Note{}, fmt.Errorf("error saving JSON file: %v", err)
+				return Note{}, fmt.Errorf("error saving JSON file: %w", err)
 			}
 
 			return s.Notes[i], nil
@@ -244,10 +242,7 @@ func (s *Store) FindNoteID(notes []Note, name string) (string, error) {
 }
 
 func (s *Store) GetNoteNames() []string {
-	notesArr, err := s.GetNotes()
-	if err != nil {
-		fmt.Errorf("error loading notes: %v", err)
-	}
+	notesArr, _ := s.GetNotes()
 
 	var noteNames []string
 
@@ -263,7 +258,7 @@ func (s *Store) GetNoteNames() []string {
 func (s *Store) ExportNote(id string) error {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("could not find user's home directory: %v", err)
+		return fmt.Errorf("could not find user's home directory: %w", err)
 	}
 
 	docs := filepath.Join(home, "Documents")
@@ -281,7 +276,7 @@ func (s *Store) ExportNote(id string) error {
 
 	err = os.WriteFile(filePath, data, 0o666)
 	if err != nil {
-		return fmt.Errorf("could not export note: %v", err)
+		return fmt.Errorf("could not export note: %w", err)
 	}
 
 	return nil
@@ -290,21 +285,21 @@ func (s *Store) ExportNote(id string) error {
 func (s *Store) ExportAll() error {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("could not find user's home directory: %v", err)
+		return fmt.Errorf("could not find user's home directory: %w", err)
 	}
 
 	exportPath := filepath.Join(home, "Documents", "biji-export.zip")
 
 	tempDir, err := os.MkdirTemp("", "biji-export")
 	if err != nil {
-		return fmt.Errorf("error creating temp directory: %v", err)
+		return fmt.Errorf("error creating temp directory: %w", err)
 	}
 
 	defer os.RemoveAll(tempDir)
 
 	notes, err := s.GetNotes()
 	if err != nil {
-		return fmt.Errorf("could not retrive notes: %v", err)
+		return fmt.Errorf("could not retrive notes: %w", err)
 	}
 
 	for _, note := range notes {
@@ -314,14 +309,14 @@ func (s *Store) ExportAll() error {
 		data := []byte(note.Content)
 
 		if err = os.WriteFile(tmpFile, data, 0o644); err != nil {
-			return fmt.Errorf("failed to write temp file %s: %v", cleanName, err)
+			return fmt.Errorf("failed to write temp file %s: %w", cleanName, err)
 		}
 
 	}
 
 	err = createZip(tempDir, exportPath)
 	if err != nil {
-		return fmt.Errorf("failed to create zip file: %v", err)
+		return fmt.Errorf("failed to create zip file: %w", err)
 	}
 
 	fmt.Printf("Export Complete!\nCheck your ~/Documents directory.")
