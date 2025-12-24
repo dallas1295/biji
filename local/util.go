@@ -11,7 +11,7 @@ import (
 func createZip(source string, target string) error {
 	zipFile, err := os.Create(target)
 	if err != nil {
-		return fmt.Errorf("error creating target directory %v", err)
+		return fmt.Errorf("error creating target directory %w", err)
 	}
 
 	defer zipFile.Close()
