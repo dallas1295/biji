@@ -11,18 +11,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// TODO: This logic is broken... need to create a switch case to get desired outcome.
+// it can probably get done via the if or else logic but it's lazy and not pretty and
+// easy to read.
+// DO THE SAME FOR DELETION MAYBE????
 func newNote(s *local.Store) *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "new [name]",
+		Use:   "new [name] [content]",
 		Short: "Create a new note",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var name, content string
 			reader := bufio.NewReader(os.Stdin)
 
-			if len(args) > 0 {
+			if len(args) == 2 {
 				name = args[0]
-			} else if len(args) > 1 {
-				log.Fatalf("Too many arguments")
+
+				content = strings.TrimSpace(strings.ReplaceAll(args[1], "\\n", "\n"))
 			} else {
 				fmt.Print("Name: ")
 
@@ -31,17 +35,17 @@ func newNote(s *local.Store) *cobra.Command {
 					log.Fatalf("Failed to read name: %v", err)
 				}
 				name = strings.TrimSpace(rawInput)
+
+				fmt.Print("Content: ")
+				rawInput, err = reader.ReadString('\n')
+				if err != nil {
+					log.Fatalf("Failed to read content: %v", err)
+				}
+				content = strings.ReplaceAll(rawInput, "\\n", "\n")
+				content = strings.TrimSpace(content)
 			}
 
-			fmt.Print("Content: ")
-			rawInput, err := reader.ReadString('\n')
-			if err != nil {
-				log.Fatalf("Failed to read content: %v", err)
-			}
-			content = strings.ReplaceAll(rawInput, "\\n ", "\n")
-			content = strings.TrimSpace(content)
-
-			_, err = s.AddNote(name, content)
+			_, err := s.AddNote(name, content)
 			if err != nil {
 				log.Fatalf("Note creation failed: %v", err)
 			}

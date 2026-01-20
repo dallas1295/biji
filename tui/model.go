@@ -1,82 +1,40 @@
 package tui
 
 import (
-	"log"
-
-	"codeberg.org/dallas1295/biji/local"
-	"github.com/charmbracelet/bubbles/textarea"
-	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+type status int
+
+var models []tea.Model
+
 const (
-	listView uint = iota
+	model status = iota
 )
 
-type model struct {
-	state     uint
-	store     *local.Store
-	notes     []local.Note
-	listIndex int
-	textArea  textarea.Model
-	textInput textinput.Model
-	width     int
-	height    int
+type Model struct {
+	focused  status
+	noteList []list.Model
 }
 
-func (m model) Init() tea.Cmd {
+func New() *Model {
+	return &Model{}
+}
+
+func (m Model) Initi() tea.Cmd {
 	return nil
 }
 
-func NewModel(s *local.Store) model {
-	notesSlice, err := s.GetNotes()
-	if err != nil {
-		log.Fatalf("error loading notes: %v", err)
-	}
-
-	return model{
-		state:     listView,
-		store:     s,
-		notes:     notesSlice,
-		textArea:  textarea.New(),
-		textInput: textinput.New(),
-	}
-}
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var (
-		cmds []tea.Cmd
-		cmd  tea.Cmd
-	)
-
-	m.textArea, cmd = m.textArea.Update(msg)
-	cmds = append(cmds, cmd)
-	m.textInput, cmd = m.textInput.Update(msg)
-	cmds = append(cmds, cmd)
-
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-
 	case tea.KeyMsg:
-		key := msg.String()
-		switch m.state {
-		case listView:
-			switch key {
-			case "ctrl+c", "q":
-				return m, tea.Quit
-			case "k", "up":
-				if m.listIndex > 0 {
-					m.listIndex--
-				}
-			case "j", "down":
-				if m.listIndex < len(m.notes)-1 {
-					m.listIndex++
-				}
-			}
+		switch msg.String() {
+		case "q", "ctrl+c":
+			return nil, tea.Quit
 		}
-
 	}
-	return m, tea.Batch(cmds...)
+
+	var cmd tea.Cmd
+	return nil, cmd
 }

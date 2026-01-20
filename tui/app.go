@@ -1,3 +1,4 @@
+// Package tui is where all business and model logic for the bubbletea portion of the app is located.
 package tui
 
 import (
@@ -7,7 +8,7 @@ import (
 
 func Run(store *local.Store) error {
 	m := NewModel(store)
-	p := tea.NewProgram(m)
+	p := tea.NewProgram(m, tea.WithAltScreen())
 	_, err := p.Run()
 	return err
 }
