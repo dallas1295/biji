@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"codeberg.org/dallas1295/biji/local"
+	"github.com/dallas1295/biji/local"
 	"github.com/spf13/cobra"
 )
 

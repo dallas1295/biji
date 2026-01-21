@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"codeberg.org/dallas1295/biji/local"
-	"codeberg.org/dallas1295/biji/tui"
+	"github.com/dallas1295/biji/local"
+	"github.com/dallas1295/biji/tui"
 	"github.com/spf13/cobra"
 )
 
