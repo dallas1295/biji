@@ -16,6 +16,8 @@ type SyncRequest struct {
 }
 
 func (s *Server) SyncHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO implement real sync logic
+
 	if r.Method != "POST" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
