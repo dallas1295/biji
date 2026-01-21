@@ -143,3 +143,9 @@ func (s *Server) GetNotesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
 }
+
+func (s *Server) GetUserCount() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return len(s.users)
+}
