@@ -81,8 +81,7 @@ func (s *Server) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var syncCode string
 	var user *User
 
-	// Practically never happen but probably a good way
-	// to have a just in case mentality.
+	// Set a maximum number of attempts, good for non-infinite loop
 	for range maxAttempts {
 		syncCode = generateSyncCode()
 		s.mu.Lock()
@@ -149,5 +148,6 @@ func (s *Server) GetNotesHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) GetUserCount() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+	// just returns the number of users stored
 	return len(s.users)
 }

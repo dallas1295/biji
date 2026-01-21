@@ -16,16 +16,19 @@ import (
 )
 
 func main() {
+	// get port from env file, if not set auto to 420420
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "420420"
 	}
 
+	// get the current user
 	usr, err := user.Current()
 	if err != nil {
 		log.Fatalf("Failed to get home directory: %v", err)
 	}
-
+	// get data directory from env file
+	// if not appdata/biji-server or directly into home directory in Unix-like
 	dataDir := os.Getenv("DATA_DIR")
 	if dataDir == "" {
 		if runtime.GOOS == "windows" {
@@ -39,11 +42,13 @@ func main() {
 	log.Printf("Starting biji server on port %s", port)
 	log.Printf("Data Directory: %s", dataDir)
 
+	// creates a new server with the preexisting data's users
 	srv, err := server.NewServer(dataDir)
 	if err != nil {
 		log.Fatalf("Failed to create server: %v", err)
 	}
 
+	// create a new mux and run my handlers via it
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/register", srv.RegisterHandler)
 	mux.HandleFunc("/api/sync", srv.SyncHandler)
@@ -54,6 +59,7 @@ func main() {
 	log.Println("  POST  /api/sync")
 	log.Println("  GET   /api/notes")
 
+	// server configuration
 	httpServer := &http.Server{
 		Addr:         "127.0.0.1:" + port,
 		Handler:      mux,
@@ -62,9 +68,11 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
+	// create a channel to recieve signal input from
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
+	// embed the ListenAndServe into a go function to move off main thread
 	go func() {
 		log.Printf("Server listening on %s", httpServer.Addr)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -72,6 +80,7 @@ func main() {
 		}
 	}()
 
+	// when the sigterm is notified the channel begins shutdown
 	sig := <-sigChan
 	log.Printf("Recieve signal %v, shutting server down", sig)
 
