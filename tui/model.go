@@ -2,39 +2,33 @@ package tui
 
 import (
 	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/textarea"
+	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
+	"github.com/dallas1295/biji/local"
 )
 
-type status int
+type model struct {
+	list      list.Model
+	textarea  textarea.Model
+	view      viewport.Model
+	nameInput textinput.Model
 
-var models []tea.Model
+	store           *local.Store
+	notes           []list.Item
+	currNote        *local.Note
+	originalContent string
+
+	showlist  bool
+	isEditing bool
+	focused   focusState
+	unsaved   bool
+}
+
+type focusState int
 
 const (
-	model status = iota
+	focusList focusState = iota
+	focusEditor
+	focusName
 )
-
-type Model struct {
-	focused  status
-	noteList []list.Model
-}
-
-func New() *Model {
-	return &Model{}
-}
-
-func (m Model) Initi() tea.Cmd {
-	return nil
-}
-
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "q", "ctrl+c":
-			return nil, tea.Quit
-		}
-	}
-
-	var cmd tea.Cmd
-	return nil, cmd
-}

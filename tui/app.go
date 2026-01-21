@@ -2,8 +2,8 @@
 package tui
 
 import (
-	"codeberg.org/dallas1295/biji/local"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/dallas1295/biji/local"
 )
 
 func Run(store *local.Store) error {

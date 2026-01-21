@@ -21,6 +21,9 @@ type Note struct {
 	Content    string    `json:"content"`
 	CreatedAt  time.Time `json:"createdAt"`
 	ModifiedAt time.Time `json:"modifiedAt"`
+
+	Version  int       `json:"version"`
+	LastSync time.Time `json:"lastSync"`
 }
 
 type Store struct {

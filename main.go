@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"codeberg.org/dallas1295/biji/cmd"
-	"codeberg.org/dallas1295/biji/local"
+	"github.com/dallas1295/biji/cmd"
+	"github.com/dallas1295/biji/local"
 )
 
 func main() {
