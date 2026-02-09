@@ -40,7 +40,10 @@ func (s *Store) Init() error {
 	if err != nil {
 		return fmt.Errorf("could not get current user: %w", err)
 	}
-
+	// Get OS and set default dir based on results
+	// NOTE currently this is set up to save to a JSON file. However,
+	// in the future I'll consider switching to a SQLite database.
+	// The current implementation is easier for cloud sync learning.
 	var bijiDir string
 	if runtime.GOOS == "windows" {
 		bijiDir = filepath.Join(os.Getenv("APPDATA"), "biji")
@@ -67,6 +70,7 @@ func (s *Store) Init() error {
 	return nil
 }
 
+// GetNoteFromID get's the notes ID in the JSON file from the title.
 func (s *Store) GetNoteFromID(id string) (Note, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
@@ -80,6 +84,7 @@ func (s *Store) GetNoteFromID(id string) (Note, error) {
 	return Note{}, fmt.Errorf("could not find note with ID: %s", id)
 }
 
+// GetNotes reads the JSON file and loads them into memory via an vector of notes.
 func (s *Store) GetNotes() ([]Note, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
@@ -103,6 +108,8 @@ func (s *Store) GetNotes() ([]Note, error) {
 	return notes, nil
 }
 
+// AddNote takes a name and some content and trims and preps them.
+// It creates an in memory Note and adds it to the JSON file.
 func (s *Store) AddNote(name, content string) (*Note, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -139,6 +146,8 @@ func (s *Store) AddNote(name, content string) (*Note, error) {
 	return &note, nil
 }
 
+// DeleteNote searches the in memory notes marks it's position in the vector,
+// and recompiles the in memory vector. After it's changed in memory it resaves the json.
 func (s *Store) DeleteNote(id string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -170,6 +179,8 @@ func (s *Store) DeleteNote(id string) error {
 	return nil
 }
 
+// UpdateNoteName takes the notes ID and a new name. and returns a changed note in memory and then resaves the JSON.
+// It returns an error if no note is found
 func (s *Store) UpdateNoteName(id string, newName string) (Note, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -198,6 +209,8 @@ func (s *Store) UpdateNoteName(id string, newName string) (Note, error) {
 	return Note{}, fmt.Errorf("could not find note with provided ID")
 }
 
+// UpdateNoteContent operates the same as UpdateNoteName. changes the in memory slices then writes to the JSON
+// It returns an error if no note is found
 func (s *Store) UpdateNoteContent(id string, newContent string) (Note, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -233,6 +246,8 @@ func (s *Store) UpdateNoteContent(id string, newContent string) (Note, error) {
 	return Note{}, fmt.Errorf("could not find note with ID: %s", id)
 }
 
+// FindNoteID takes the in memory notes array and a name, it iterates over the array until it matches the name.
+// It returns an error if no note is found
 func (s *Store) FindNoteID(notes []Note, name string) (string, error) {
 	trimmedName := strings.TrimSpace(name)
 	for i := range notes {
@@ -258,6 +273,8 @@ func (s *Store) GetNoteNames() []string {
 	return noteNames
 }
 
+// ExportNote takes a note ID, GetNoteFromID and preps and trims into a .md file to Documents.
+// It returns an error if no note is found, or if there is an error writing the new .md file.
 func (s *Store) ExportNote(id string) error {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -285,6 +302,8 @@ func (s *Store) ExportNote(id string) error {
 	return nil
 }
 
+// ExportAll takes the entire saved JSON file compiles multiple .md files and zips them.
+// It places it in Documents under biji-export.zip
 func (s *Store) ExportAll() error {
 	home, err := os.UserHomeDir()
 	if err != nil {
